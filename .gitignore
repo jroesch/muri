@@ -1,0 +1,8 @@
+*.clean
+*.ilean
+*.d
+.ninja_deps
+.ninja_log
+a.out
+out.cpp
+build.ninja
