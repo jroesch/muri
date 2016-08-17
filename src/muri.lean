@@ -5,7 +5,7 @@ import system.ffi
 set_option native.library_path "/Users/jroesch/Git/lean/build/debug"
 set_option native.include_path "/Users/jroesch/Git/lean/src"
 -- This flag controls whether lean will automatically invoke C++
-set_option native.compile false
+-- set_option native.compile false
 set_option native.emit_dwarf true
 -- set_option trace.compiler true
 
@@ -26,27 +26,33 @@ definition enumerate_inner {A : Type}: nat → list A → list (nat × A)
 definition enumerate {A : Type} (xs : list A) :=
   enumerate_inner 0 xs
 
-check write_array
+-- okay wtf was this? rememeber the constant failure
+definition write_char (c : char) (p : ptr (base char)) : IO unit :=
+  write_char_as_char c p
+
+definition initialize (value : char) : IO (ptr (base base_type.char)) :=
+  new (base char) >>= (fun foreign_c, write_char value foreign_c >>= (fun t, return foreign_c))
 
 definition write_to_cstring (p : ptr cstring) : list (nat × char) → IO unit
 | write_to_cstring [] := return unit.star
 | write_to_cstring ((i, c) :: cs) := do
   foreign_c <- new (base char),
-  _ <- write_char_as_char_ptr c foreign_c,
-  write_array p i foreign_c,
+  write_char c foreign_c,
+  (@write_array 256 (base base_type.char) p i foreign_c : IO unit),
   write_to_cstring cs
 
-definition to_cstring : string → IO (ptr cstring) := fun str, do
-  str <- new cstring,
- 
-  return str
+constant puts : extern void "puts" [cstring]
+attribute [extern] puts
 
-definition main : IO unit := do
-  s <- to_cstring "Hello World!",
-  return unit.star
+definition to_cstring (str : string) : IO (ptr cstring) := do
+  cstr <- new cstring,
+  write_to_cstring cstr (@enumerate char str),
+  return cstr
 
-  -- i <- new (base int),
-  -- write_nat_as_int 1337 i,
-  -- put_int i
+definition foo : ptr cstring -> IO unit :=
+  puts
 
-vm_eval main
+definition main : IO unit :=
+  ((to_cstring "Hello World!" : IO (ptr cstring)) >>= fun s, foo s)
+
+-- vm_eval main
