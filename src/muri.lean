@@ -38,23 +38,25 @@ check @trace
 definition write_to_cstring (p : ptr cstring) : list (nat × char) → IO unit
 | write_to_cstring [] := return unit.star
 | write_to_cstring ((i, c) :: cs) := do
-  foreign_c <- new (base char),
-  write_char c foreign_c,
-  (@write_array 256 (base base_type.char) p i foreign_c : IO unit),
+  iv <- index_array p i,
+  write_char c iv,
   write_to_cstring cs
 
-constant puts : extern void "puts" [cstring]
-attribute [extern] puts
+constant putstr : extern void "puts" [cstring]
+attribute [extern] putstr
 
-definition to_cstring (str : string) : IO (ptr cstring) := do
+definition to_cstring (s : string) : IO (ptr cstring) := do
   cstr <- new cstring,
-  write_to_cstring cstr (@enumerate char (string.concat [char.of_nat 0] str)),
+  write_to_cstring cstr (enumerate [char.of_nat 48, char.of_nat 0]),
   return cstr
 
 definition foo : ptr cstring -> IO unit :=
-  puts
+  putstr
 
 definition main : IO unit :=
+   -- i <- new (base int),
+   -- write_nat_as_int 10 i,
+   -- put_int i
   ((to_cstring "Hello World!" : IO (ptr cstring)) >>= fun s, foo s)
 
 vm_eval main
