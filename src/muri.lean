@@ -33,6 +33,8 @@ definition write_char (c : char) (p : ptr (base char)) : IO unit :=
 definition initialize (value : char) : IO (ptr (base base_type.char)) :=
   new (base char) >>= (fun foreign_c, write_char value foreign_c >>= (fun t, return foreign_c))
 
+check @trace
+
 definition write_to_cstring (p : ptr cstring) : list (nat × char) → IO unit
 | write_to_cstring [] := return unit.star
 | write_to_cstring ((i, c) :: cs) := do
@@ -46,7 +48,7 @@ attribute [extern] puts
 
 definition to_cstring (str : string) : IO (ptr cstring) := do
   cstr <- new cstring,
-  write_to_cstring cstr (@enumerate char str),
+  write_to_cstring cstr (@enumerate char (string.concat [char.of_nat 0] str)),
   return cstr
 
 definition foo : ptr cstring -> IO unit :=
@@ -55,4 +57,4 @@ definition foo : ptr cstring -> IO unit :=
 definition main : IO unit :=
   ((to_cstring "Hello World!" : IO (ptr cstring)) >>= fun s, foo s)
 
--- vm_eval main
+vm_eval main
