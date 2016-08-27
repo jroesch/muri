@@ -22,4 +22,3 @@ lean::vm_obj putstr(lean::vm_obj const & s, lean::vm_obj const &) {
 }
 
 }
-

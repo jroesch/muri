@@ -6,3 +6,6 @@
 a.out
 out.cpp
 build.ninja
+*.dSYM
+*.dylib
+*.dll
