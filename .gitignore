@@ -9,3 +9,5 @@ build.ninja
 *.dSYM
 *.dylib
 *.dll
+*.swp
+target/

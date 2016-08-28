@@ -17,7 +17,7 @@ open ffi.base_type
 --  | fail : I → result I T
 
 constant put_int : extern void "put_int" [int]
-attribute [extern] put_int
+attribute [extern "put_int" "/Users/jroesch/Git/muri/target/libput_int.so"] put_int
 
 definition enumerate_inner {A : Type}: nat → list A → list (nat × A)
 | enumerate_inner i [] := []
@@ -42,21 +42,55 @@ definition write_to_cstring (p : ptr cstring) : list (nat × char) → IO unit
   write_char c iv,
   write_to_cstring cs
 
-constant putstr : extern void "puts" [cstring]
-attribute [extern] putstr
-
 definition to_cstring (s : string) : IO (ptr cstring) := do
   cstr <- new cstring,
-  write_to_cstring cstr (enumerate [char.of_nat 48, char.of_nat 0]),
+  write_to_cstring cstr (enumerate (list.append (list.reverse s) [char.of_nat 0])),
   return cstr
+
+constant putstr : extern void "puts" [cstring]
+attribute [extern "putstr" "/Users/jroesch/Git/muri/target/libput_int.so"] putstr
+
+inductive file
+| mk : ptr int -> file
+
+constant read_file : extern void "puts" [int, cstring, int]
+attribute [extern "read_file" "/Users/jroesch/Git/muri/target/libput_int.so"] read_file
+
+constant open_file : extern int "puts" [cstring]
+attribute [extern "open_file" "/Users/jroesch/Git/muri/target/libput_int.so"] open_file
+
+
+-- local attribute [semireducible] extern
+local attribute [reducible] cstring
+local attribute [reducible] extern
+
+definition open_file' : ptr cstring -> IO (ptr (base int)) := open_file
+definition read_file' : ptr (base int) -> ptr cstring -> ptr (base int) -> IO unit := read_file
+
+definition openf (file_name : string) : IO file :=
+  to_cstring file_name >>= open_file' >>= (fun cfd, return (file.mk cfd))
+
+definition readf : file -> IO (ptr cstring)
+| readf (file.mk fd) := do
+  buf <- new cstring,
+  count <- new (base int),
+  storable.write (5 : nat) count,
+  read_file' fd buf count,
+  iv <- index_array buf 6,
+  write_char (char.of_nat 0) iv,
+  return buf
 
 definition foo : ptr cstring -> IO unit :=
   putstr
 
-definition main : IO unit :=
-   -- i <- new (base int),
-   -- write_nat_as_int 10 i,
-   -- put_int i
-  ((to_cstring "Hello World!" : IO (ptr cstring)) >>= fun s, foo s)
+definition main : IO unit := do
+   f <- openf "hello.txt",
+   s <- readf f,
+   foo s
+
+   -- f <- openf "hello.txt",
+   -- return ()
+   -- s <- readf f,
+   -- foo s
 
 vm_eval main
