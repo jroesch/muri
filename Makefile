@@ -12,3 +12,4 @@ target/lib%.so : extern/%.cpp
 
 clean:
 	rm -rf target/*
+	cd src

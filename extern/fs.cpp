@@ -30,7 +30,7 @@ lean::vm_obj putstr(lean::vm_obj const & s, lean::vm_obj const &) {
 }
 
 lean::vm_obj open_file(lean::vm_obj const & str_ptr, lean::vm_obj const &) {
-    char *path = lean::to_raw_ptr<char>(str_ptr);
+    char *path = (char*)pointer_from_vm_array(str_ptr);
     int *fd = new int;
     *fd = open(path, O_RDONLY);
     std::cout << "file descriptor is: " << *fd << std::endl;
@@ -45,7 +45,7 @@ lean::vm_obj read_file(
 {
     std::cout << "read-file" << std::endl;
     int fd = *lean::to_raw_ptr<int>(file_ptr);
-    void *buffer = lean::to_raw_ptr<char>(str_ptr);
+    void *buffer = pointer_from_vm_array(str_ptr);
     size_t count = (size_t)*lean::to_raw_ptr<int>(count_ptr);
     size_t bytes_read = read(fd, buffer, count);
     return lean::mk_vm_simple(0);
